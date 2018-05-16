@@ -22,6 +22,17 @@ module.exports = robot => {
       for (const [key,value] of Object.entries(rygProjectDefaultConfig.rygProjectLabelsColumns)) {
         if(key===labelName) {
           robot.log('Match for ' + key + '. Moving Project Card to column ' + value)
+/*
+1. Get the configured rygProjectProjectBoard project
+*/
+          const repo = context.repo()
+          robot.log(repo)
+
+/*
+2. Find the new column via the [key,value] pair from rygProjectLabelsColumns
+3. Find the issue's card in the project, if it does not exist, create it (singleton pattern)
+4. Move the card to the new column
+*/
         }
         else {
           robot.log('Deleting ' + key + ' Label');
