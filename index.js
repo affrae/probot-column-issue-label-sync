@@ -1,5 +1,10 @@
 const rygProjectDefaultConfig = {
-  rygProjectBoard:"🛑⚠️❇️ Alerts"
+  rygProjectProjectBoard:"🛑⚠️❇️ Alerts",
+  rygProjectLabelsColumns {
+    "🛑 Red":"🛑 Red",
+    "⚠️ Yellow":"⚠️ Yellow",
+    "❇️ Green":"❇️ Green"
+  }
 }
 
 module.exports = robot => {
