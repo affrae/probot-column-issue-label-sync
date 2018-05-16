@@ -1,6 +1,6 @@
 const rygProjectDefaultConfig = {
   rygProjectProjectBoard:"🛑⚠️❇️ Alerts",
-  rygProjectLabelsColumns {
+  rygProjectLabelsColumns: {
     "🛑 Red":"🛑 Red",
     "⚠️ Yellow":"⚠️ Yellow",
     "❇️ Green":"❇️ Green"
