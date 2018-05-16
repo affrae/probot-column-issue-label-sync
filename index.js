@@ -13,6 +13,13 @@ module.exports = robot => {
   for (const [key,value] of Object.entries(rygProjectDefaultConfig)) {
     robot.log(key, value);
   }
+  robot.on('issues.labeled', async context => {
+    const issueTitle = context.issue("title");
+    const issueLabel = context.issue("label");
+    robot.log(issueTitle);
+    robot.log(issueLabel);
+    return
+  })
   robot.on('issues.opened', async context => {
     // `context` extracts information from the event, which can be passed to
     // GitHub API calls. This will return:
