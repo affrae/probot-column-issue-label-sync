@@ -3,9 +3,9 @@ const rygProjectDefaultConfig = {
 }
 
 module.exports = robot => {
-  robot.log('Yay, the app was loaded!')
-  robot.log('rygProjectDefaultConfig entries')
-  for (const entry of rygProjectDefaultConfig.entries()) {
+  robot.log('Yay, the app was loaded!');
+  robot.log('rygProjectDefaultConfig entries');
+  for (const [key,value] of Object.entries(rygProjectDefaultConfig)) {
     robot.log(entry);
   }
   robot.on('issues.opened', async context => {
