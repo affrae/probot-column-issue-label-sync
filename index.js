@@ -15,8 +15,6 @@ module.exports = robot => {
   }
   robot.on('issues.labeled', async context => {
     const labelName = context.payload.label.name
-    const labels = context.payload.issue.labels;
-    robot.log(labels);
     if (labelName in rygProjectDefaultConfig.rygProjectLabelsColumns) {
       robot.log(labelName + ' is in rygProjectLabelsColumns');
       for (const [key,value] of Object.entries(rygProjectDefaultConfig.rygProjectLabelsColumns)) {
@@ -25,8 +23,11 @@ module.exports = robot => {
 /*
 1. Get the configured rygProjectProjectBoard project
 */
-          const repo = context.repo()
+          const repoProjectParams = context.repo({state:open})
           robot.log(repo)
+          theProjects = context.github.projects.getRepoProjects(repoProjectParams);
+          robot.log(theProjects)
+
 
 /*
 2. Find the new column via the [key,value] pair from rygProjectLabelsColumns
