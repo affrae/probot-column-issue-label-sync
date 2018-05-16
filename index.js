@@ -8,11 +8,7 @@ const rygProjectDefaultConfig = {
 }
 
 module.exports = robot => {
-  robot.log('Yay, the app was loaded!');
-  robot.log('rygProjectDefaultConfig entries');
-  for (const [key,value] of Object.entries(rygProjectDefaultConfig)) {
-    robot.log(key, value);
-  }
+
   robot.on('issues.labeled', async context => {
     const labelName = context.payload.label.name
     if (labelName in rygProjectDefaultConfig.rygProjectLabelsColumns) {
@@ -23,7 +19,7 @@ module.exports = robot => {
 /*
 1. Get the configured rygProjectProjectBoard project
 */
-          const repoProjectParams = context.repo({state:open})
+          const repoProjectParams = context.repo({state:"open"})
           robot.log(repo)
           theProjects = context.github.projects.getRepoProjects(repoProjectParams);
           robot.log(theProjects)
