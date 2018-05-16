@@ -22,7 +22,8 @@ module.exports = robot => {
       }
       else {
         robot.log('Deleting ' + key + ' Label')
-        return context.github.issues.removeLabel(key)
+        const params = context.issue({name: key})
+        return context.github.issues.removeLabel(params)
       }
     }
     return
