@@ -19,12 +19,15 @@ module.exports = robot => {
       robot.log(labelName + ' is in rygProjectLabelsColumns');
       for (const [key,value] of Object.entries(rygProjectDefaultConfig.rygProjectLabelsColumns)) {
         if(key===labelName) {
-          robot.log('Match for ' + key + '. Moving Project Card')
+          robot.log('Match for ' + key + '. Moving Project Card to column ' + value)
         }
         else {
-          robot.log('Deleting ' + key + ' Label')
-          const params = context.issue({name: key})
-          return context.github.issues.removeLabel(params)
+          const labels = context.payload.labels;
+          robot.log(labels);
+          robot.log('Deleting ' + key + ' Label');
+          const params = context.issue({name: key});
+//          return context.github.issues.removeLabel(params)
+          return
         }
       }
     }
