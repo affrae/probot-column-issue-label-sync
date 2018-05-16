@@ -21,7 +21,8 @@ module.exports = robot => {
         robot.log('Match for ' + key + '. Moving Project Card')
       }
       else {
-        robot.log('No Match for ' + key + '. Deleting Label')
+        robot.log('Deleting ' + key + ' Label')
+        return context.github.issues.removeLabel(key)
       }
     }
     return
