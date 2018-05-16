@@ -15,8 +15,8 @@ module.exports = robot => {
   }
   robot.on('issues.labeled', async context => {
     const labelName = context.payload.label.name
-    robot.log(labelName);
     if (labelName in rygProjectDefaultConfig.rygProjectLabelsColumns) {
+      robot.log(labelName + ' is in rygProjectLabelsColumns');
       for (const [key,value] of Object.entries(rygProjectDefaultConfig.rygProjectLabelsColumns)) {
         if(key===labelName) {
           robot.log('Match for ' + key + '. Moving Project Card')
@@ -27,6 +27,9 @@ module.exports = robot => {
           return context.github.issues.removeLabel(params)
         }
       }
+    }
+    else {
+      robot.log(labelName + ' is NOT in rygProjectLabelsColumns');
     }
     return
   })
