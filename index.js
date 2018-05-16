@@ -22,7 +22,7 @@ module.exports = robot => {
           robot.log('Match for ' + key + '. Moving Project Card to column ' + value)
         }
         else {
-          const labels = context.payload.labels;
+          const labels = context.payload.issue.labels;
           robot.log(labels);
           robot.log('Deleting ' + key + ' Label');
           const params = context.issue({name: key});
