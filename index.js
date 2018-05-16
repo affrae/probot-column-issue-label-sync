@@ -26,7 +26,7 @@ NEED TO ADD PAGING
           theData = theProjects.data;
           var projectID = -1;
           for (const theProject of theData){
-            if(theProject.name===labrygProjectDefaultConfig.rygProjectProjectBoard) {
+            if(theProject.name===rygProjectDefaultConfig.rygProjectProjectBoard) {
               robot.log(theProject.name + ' found!');
               projectID = theProject.id;
               robot.log('ID = ' + projectID);
