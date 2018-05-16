@@ -14,7 +14,7 @@ module.exports = robot => {
     robot.log(key, value);
   }
   robot.on('issues.labeled', async context => {
-    robot.log(context.payload);
+    robot.log(context.payload.issue.label.name);
     return
   })
   robot.on('issues.opened', async context => {
