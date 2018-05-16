@@ -24,17 +24,14 @@ module.exports = robot => {
         else {
           const labels = context.payload.issue.labels;
           robot.log('Deleting ' + key + ' Label');
-          try {
-            const params = context.issue({name: key})
-            context.github.issues.removeLabel(params)
-          } catch(error) {
+          const params = context.issue({name: key})
+          var result = context.github.issues.removeLabel(params)
+          if ( result instanceof Error ) {
+            // handle the error safely
             robot.log ('Label not found')
           }
         }
       }
-    }
-    else {
-      robot.log(labelName + ' is NOT in rygProjectLabelsColumns');
     }
     return
   })
