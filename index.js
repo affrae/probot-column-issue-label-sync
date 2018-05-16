@@ -23,8 +23,8 @@ module.exports = robot => {
           robot.log(repoProjectParams)
           theProjects = await context.github.projects.getRepoProjects(repoProjectParams);
           theData = theProjects.data;
-          for each(project in theData){
-            robot.log(project.name);
+          for each (var theProject in theData){
+            robot.log(theProject.name);
           }
 
 
