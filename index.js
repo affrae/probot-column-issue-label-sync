@@ -14,9 +14,7 @@ module.exports = robot => {
     robot.log(key, value);
   }
   robot.on('issues.labeled', async context => {
-    const labelName = "HELLO";
-    const params = context.issue({body: 'Hey, the ' + labelName + ' label was added'})
-    return context.github.issues.createComment(params)
+    robot.log(context.payload);
     return
   })
   robot.on('issues.opened', async context => {
