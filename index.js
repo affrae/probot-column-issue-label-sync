@@ -16,14 +16,16 @@ module.exports = robot => {
   robot.on('issues.labeled', async context => {
     const labelName = context.payload.label.name
     robot.log(labelName);
-    for (const [key,value] of Object.entries(rygProjectDefaultConfig.rygProjectLabelsColumns)) {
-      if(key===labelName) {
-        robot.log('Match for ' + key + '. Moving Project Card')
-      }
-      else {
-        robot.log('Deleting ' + key + ' Label')
-        const params = context.issue({name: key})
-        return context.github.issues.removeLabel(params)
+    if (labelName in rygProjectDefaultConfig.rygProjectLabelsColumns) {
+      for (const [key,value] of Object.entries(rygProjectDefaultConfig.rygProjectLabelsColumns)) {
+        if(key===labelName) {
+          robot.log('Match for ' + key + '. Moving Project Card')
+        }
+        else {
+          robot.log('Deleting ' + key + ' Label')
+          const params = context.issue({name: key})
+          return context.github.issues.removeLabel(params)
+        }
       }
     }
     return
