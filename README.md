@@ -1,6 +1,6 @@
 # affrae-probot-testing
 
-> a GitHub App built with [probot](https://github.com/probot/probot) that 
+> a GitHub App built with [probot](https://github.com/probot/probot) that I will use to test snippets and ideas
 
 ## Setup
 
