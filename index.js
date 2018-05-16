@@ -14,8 +14,8 @@ module.exports = robot => {
     robot.log(key, value);
   }
   robot.on('issues.labeled', async context => {
-    const labels = context.payload.issue.labels
-    robot.log(labels);
+    const label = context.payload.label
+    robot.log(label);
     return
   })
   robot.on('issues.opened', async context => {
