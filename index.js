@@ -1,5 +1,13 @@
+const rygProjectDefaultConfig = {
+  rygProjectBoard:"🛑⚠️❇️ Alerts"
+}
+
 module.exports = robot => {
   robot.log('Yay, the app was loaded!')
+  robot.log('rygProjectDefaultConfig entries')
+  for (const entry of rygProjectDefaultConfig.entries()) {
+    robot.log(entry);
+  }
   robot.on('issues.opened', async context => {
     // `context` extracts information from the event, which can be passed to
     // GitHub API calls. This will return:
