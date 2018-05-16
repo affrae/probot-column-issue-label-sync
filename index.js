@@ -24,11 +24,11 @@ module.exports = robot => {
         else {
           const labels = context.payload.issue.labels;
           robot.log('Deleting ' + key + ' Label');
-          const params = context.issue({name: key});
           try {
+            const params = context.issue({name: key})
             context.github.issues.removeLabel(params)
-          } catch(err) {
-            robot.log ('The label "' + key + '" does not seem to be attached to the issue' )
+          } catch(error) {
+            robot.log ('Label not found')
           }
         }
       }
