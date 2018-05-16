@@ -20,7 +20,7 @@ module.exports = robot => {
 1. Get the configured rygProjectProjectBoard project
 */
           const repoProjectParams = context.repo({state:"open"})
-          robot.log(repo)
+          robot.log(repoProjectParams)
           theProjects = context.github.projects.getRepoProjects(repoProjectParams);
           robot.log(theProjects)
 
