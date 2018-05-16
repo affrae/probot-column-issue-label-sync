@@ -15,6 +15,8 @@ module.exports = robot => {
   }
   robot.on('issues.labeled', async context => {
     const labelName = context.payload.label.name
+    const labels = context.payload.issue.labels;
+    robot.log(labels);
     if (labelName in rygProjectDefaultConfig.rygProjectLabelsColumns) {
       robot.log(labelName + ' is in rygProjectLabelsColumns');
       for (const [key,value] of Object.entries(rygProjectDefaultConfig.rygProjectLabelsColumns)) {
@@ -22,14 +24,9 @@ module.exports = robot => {
           robot.log('Match for ' + key + '. Moving Project Card to column ' + value)
         }
         else {
-          const labels = context.payload.issue.labels;
           robot.log('Deleting ' + key + ' Label');
           const params = context.issue({name: key})
-          var result = context.github.issues.removeLabel(params)
-          if ( result instanceof Error ) {
-            // handle the error safely
-            robot.log ('Label not found')
-          }
+          context.github.issues.removeLabel(params)
         }
       }
     }
