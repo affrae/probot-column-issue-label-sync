@@ -16,6 +16,14 @@ module.exports = robot => {
   robot.on('issues.labeled', async context => {
     const labelName = context.payload.label.name
     robot.log(labelName);
+    for (const [key,value] of Object.entries(rygProjectDefaultConfig)) {
+      if(key===labelName) {
+        robot.log('Match for ' + key + '. Moving Project Card')
+      }
+      else {
+        robot.log('No Match for ' + key + '. Deleting Label')
+      }
+    }
     return
   })
   robot.on('issues.opened', async context => {
