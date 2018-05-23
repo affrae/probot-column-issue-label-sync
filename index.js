@@ -18,21 +18,22 @@ module.exports = robot => {
           robot.log('Match for ' + key + '. Moving Project Card to column ' + value)
 /*
 1. Get the configured rygProjectProjectBoard project
-NEED TO ADD PAGING
 */
-          const repoProjectParams = context.repo({state:"open"})
-          robot.log(repoProjectParams)
+          const repoProjectParams = context.repo({state:"open", name:rygProjectDefaultConfig.rygProjectProjectBoard})
+          robot.log("repoProjectParams: " + repoProjectParams)
           theProjects = await context.github.projects.getRepoProjects(repoProjectParams);
           theData = theProjects.data;
+          robot.log("theData Length: " + theData.length)
+
           var projectID = -1;
-          for (const theProject of theData){
-            if(theProject.name===rygProjectDefaultConfig.rygProjectProjectBoard) {
-              robot.log(theProject.name + ' found!');
-              projectID = theProject.id;
-              robot.log('ID = ' + projectID);
-            }
+          if (theData.length == 1)
+          {
+            projectID = theData[0].id;
+            projectName = theData[0].name;
+            robot.log('Project ' + projectName + ' found!');
+            robot.log('ID = ' + projectID);
           }
-          if (projectID == -1)
+          else
           {
             robot.log('Project not found');
             return
