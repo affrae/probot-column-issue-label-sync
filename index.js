@@ -29,7 +29,6 @@ module.exports = robot => {
     if(_.intersection(newIssuesLabels, rygProjectLabels).length==0) {
       robot.log('Need to add ' + rygProjectDefaultConfig.rygProjectDefaultLabel + ' label');
       theCommentBody += ' I have also added the '+ rygProjectDefaultConfig.rygProjectDefaultLabel + ' label';
-      const labelParams = context.issue({name: rygProjectDefaultConfig.rygProjectDefaultLabel});
       await github.issues.addLabels(context.issue({ labels: [rygProjectDefaultConfig.rygProjectDefaultLabel] }));
 
     }
@@ -60,8 +59,8 @@ module.exports = robot => {
 1. Get the configured rygProjectProjectBoard project
 */
           const repoProjectParams = context.repo({state:"open", name:rygProjectDefaultConfig.rygProjectProjectBoard})
-          theProjects = await github.projects.getRepoProjects(repoProjectParams);
-          theData = theProjects.data;
+          const theProjects = await github.projects.getRepoProjects(repoProjectParams);
+          const theData = theProjects.data;
 
           robot.log('Moving Project Card to column \'' + rygProjectDefaultConfig.rygProjectLabelsColumns[key] + '\' in Project \'' + rygProjectDefaultConfig.rygProjectProjectBoard + '\'')
           var projectID = -1;
@@ -70,6 +69,19 @@ module.exports = robot => {
             projectID = theData[0].id;
             projectName = theData[0].name;
             robot.log('Project \'' + projectName + '\' found!');
+            let allProjects = []
+            const projectColumnParams = {project_id : projectID};
+            robot.log('projectColumnParams:');
+            robot.log(projectColumnParams);
+            const theProjectColumns = await github.projects.getProjectColumns(projectColumnParams);
+            const theProjectColumnsData = theProjectColumns.data;
+
+            robot.log(theProjectColumns);
+
+            for (const projectColumn of projectColumns) {
+              robot.log('Project Column: \'' + projectColumn.name +'\'' )
+            }
+
             robot.log('Finished moving Project Card to column \'' + rygProjectDefaultConfig.rygProjectLabelsColumns[key] + '\'')
           }
           else
@@ -105,7 +117,26 @@ module.exports = robot => {
   })
   */
 
-  robot.on('issues.closed', async context => {
+  robot.on('issues.unlabeled', async context => {
+    const { payload, github } = context;
+    const labelName = payload.label.name
+    const rygProjectLabels = Object.keys(rygProjectDefaultConfig.rygProjectLabelsColumns)
+    robot.log('Newly removed label is: \'' + labelName + '\'');
+    const issuesLabelsList =  payload.issue.labels
+    const issuesLabels = issuesLabelsList.map(issuesLabelsList => issuesLabelsList["name"]);
+    robot.log('Modified Issue\'s Label Array is:');
+    robot.log(issuesLabels);
+    const arrayToClean = _.intersection(issuesLabels, rygProjectLabels)
+    robot.log('Modified Issue\'s Project Label Array is:');
+    robot.log(arrayToClean);
+    if (arrayToClean.length == 0) {
+      robot.log('Oops we removed all Project Labels, re-adding \'' + labelName + '\' label')
+      await github.issues.addLabels(context.issue({ labels: [labelName] }));
+
+    }
+  })
+
+robot.on('issues.closed', async context => {
     // `context` extracts information from the event, which can be passed to
     // GitHub API calls. This will return:
     //   {owner: 'yourname', repo: 'yourrepo', number: 123, body: 'Hello World!}
