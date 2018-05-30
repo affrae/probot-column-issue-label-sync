@@ -14,45 +14,39 @@ var _ = require('underscore');
 
 module.exports = robot => {
 
+/*
+* If an issue is opened, check what labels it has. If it soes not have a label
+* from the project board label list, add the Default Project Label
+*/
+
   robot.on('issues.opened', async context => {
     const { payload, github } = context;
-    var theCommentBody = 'Hello World! I just noticed that issue #' + payload.issue.number + ' was opened.'
-    const rygProjectLabels = Object.keys(rygProjectDefaultConfig.rygProjectLabelsColumns)
-    robot.log('Issue #' + payload.issue.number + ' opened.');
-    robot.log('Label Array is:');
-    robot.log(rygProjectLabels);
-    var newIssuesLabelsList =  payload.issue.labels
-    var newIssuesLabels= newIssuesLabelsList.map(newIssuesLabelsList => newIssuesLabelsList["name"]);
-    robot.log('New Issue\'s Label Array is:');
-    robot.log(newIssuesLabels);
-    robot.log(_.intersection(newIssuesLabels, rygProjectLabels));
-    if(_.intersection(newIssuesLabels, rygProjectLabels).length==0) {
-      robot.log('Need to add ' + rygProjectDefaultConfig.rygProjectDefaultLabel + ' label');
-      theCommentBody += ' I have also added the '+ rygProjectDefaultConfig.rygProjectDefaultLabel + ' label';
-      await github.issues.addLabels(context.issue({ labels: [rygProjectDefaultConfig.rygProjectDefaultLabel] }));
+    const rygProjectLabels = Object.keys(rygProjectDefaultConfig.rygProjectLabelsColumns);
+    const newIssuesLabelsList =  payload.issue.labels;
+    const newIssuesLabels= newIssuesLabelsList.map(newIssuesLabelsList => newIssuesLabelsList["name"]);
+    const rygProjectDefaultLabel = rygProjectDefaultConfig.rygProjectDefaultLabel;
 
+/* _.intersection returns an array that represents the items that are in both
+* the newIssuesLabels and rygProjectLabels arrays. An enpty set indicates
+* nothing in common, so we should add teh default project labels
+*/
+
+    if(_.intersection(newIssuesLabels, rygProjectLabels).length==0) {
+      await github.issues.addLabels(context.issue({ labels: [ rygProjectDefaultLabel ] }));
     }
-    const params = context.issue({body: theCommentBody})
-    return context.github.issues.createComment(params)
+
+    return
   })
 
   robot.on('issues.labeled', async context => {
     const { payload, github } = context;
     const labelName = payload.label.name
     const rygProjectLabels = Object.keys(rygProjectDefaultConfig.rygProjectLabelsColumns)
-    robot.log('Newly added label is: \'' + labelName + '\'');
-    robot.log('Default Project Label Array is:');
-    robot.log(rygProjectLabels);
     const issuesLabelsList =  payload.issue.labels
     const issuesLabels = issuesLabelsList.map(issuesLabelsList => issuesLabelsList["name"]);
-    robot.log('Modified Issue\'s Label Array is:');
-    robot.log(issuesLabels);
     const arrayToClean = _.intersection(issuesLabels, rygProjectLabels)
-    robot.log('Modified Issue\'s Project Label Array is:');
-    robot.log(arrayToClean);
 
     if (labelName in rygProjectDefaultConfig.rygProjectLabelsColumns) {
-      robot.log('\'' + labelName + '\' is in Default Project Label Array');
       for (const key of arrayToClean) {
         if(key===labelName) {
 /*
@@ -67,21 +61,18 @@ module.exports = robot => {
           if (theData.length == 1)
           {
             projectID = theData[0].id;
-            projectName = theData[0].name;
-            robot.log('Project \'' + projectName + '\' found!');
             let allProjects = []
             const projectColumnParams = {project_id : projectID};
-            robot.log('projectColumnParams:');
-            robot.log(projectColumnParams);
+
             const theProjectColumns = await github.projects.getProjectColumns(projectColumnParams);
             const theProjectColumnsData = theProjectColumns.data;
 
-            robot.log(theProjectColumns);
-
-            for (const projectColumn of projectColumns) {
+            robot.log(theProjectColumnsData);
+/*
+            for (const projectColumn of theProjectColumns) {
               robot.log('Project Column: \'' + projectColumn.name +'\'' )
             }
-
+*/
             robot.log('Finished moving Project Card to column \'' + rygProjectDefaultConfig.rygProjectLabelsColumns[key] + '\'')
           }
           else
