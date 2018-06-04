@@ -5,7 +5,14 @@ const rygProjectDefaultConfig = {
     "⚠️ Yellow":"⚠️ Yellow",
     "❇️ Green":"❇️ Green"
   },
-  rygProjectDefaultLabel:"❇️ Green",
+  rygProjectDefaultLabels:["❇️ Green"],
+
+  /*
+  Can be one of top, bottom, or after:<card_id>, where <card_id> is the id value of a card in the same column, or in the new column specified by column_id.
+
+  Allowed values: top, bottom, after:
+*/
+  rygProjectDefaultColumnPosition:"top"
 
 }
 
@@ -24,15 +31,16 @@ module.exports = robot => {
     const rygProjectLabels = Object.keys(rygProjectDefaultConfig.rygProjectLabelsColumns);
     const newIssuesLabelsList =  payload.issue.labels;
     const newIssuesLabels= newIssuesLabelsList.map(newIssuesLabelsList => newIssuesLabelsList["name"]);
-    const rygProjectDefaultLabel = rygProjectDefaultConfig.rygProjectDefaultLabel;
+    const rygProjectDefaultLabels = rygProjectDefaultConfig.rygProjectDefaultLabels;
 
-/* _.intersection returns an array that represents the items that are in both
+/*
+* _.intersection returns an array that represents the items that are in both
 * the newIssuesLabels and rygProjectLabels arrays. An enpty set indicates
-* nothing in common, so we should add teh default project labels
+* nothing in common, so we should add the default project labels
 */
 
     if(_.intersection(newIssuesLabels, rygProjectLabels).length==0) {
-      await github.issues.addLabels(context.issue({ labels: [ rygProjectDefaultLabel ] }));
+      await github.issues.addLabels(context.issue({ labels:  rygProjectDefaultLabels  }));
     }
 
     return
@@ -40,42 +48,68 @@ module.exports = robot => {
 
   robot.on('issues.labeled', async context => {
     const { payload, github } = context;
-    const labelName = payload.label.name
-    const rygProjectLabels = Object.keys(rygProjectDefaultConfig.rygProjectLabelsColumns)
-    const issuesLabelsList =  payload.issue.labels
-    const issuesLabels = issuesLabelsList.map(issuesLabelsList => issuesLabelsList["name"]);
-    const arrayToClean = _.intersection(issuesLabels, rygProjectLabels)
+    const targetColumnlabelName = payload.label.name
 
-    if (labelName in rygProjectDefaultConfig.rygProjectLabelsColumns) {
+
+
+    if (targetColumnlabelName in rygProjectDefaultConfig.rygProjectLabelsColumns) {
+      const targetColumnName = rygProjectDefaultConfig.rygProjectLabelsColumns[targetColumnlabelName];
+      const rygProjectLabels = Object.keys(rygProjectDefaultConfig.rygProjectLabelsColumns)
+      const issuesLabelsList = payload.issue.labels
+      const issuesLabels = issuesLabelsList.map(issuesLabelsList => issuesLabelsList["name"]);
+      const arrayToClean = _.intersection(issuesLabels, rygProjectLabels)
+      const rygProjectColumnPosition = rygProjectDefaultConfig.rygProjectDefaultColumnPosition
+
       for (const key of arrayToClean) {
-        if(key===labelName) {
+        if(key === targetColumnName) {
 /*
-1. Get the configured rygProjectProjectBoard project
+* 1. Get the configured rygProjectProjectBoard project
 */
-          const repoProjectParams = context.repo({state:"open", name:rygProjectDefaultConfig.rygProjectProjectBoard})
-          const theProjects = await github.projects.getRepoProjects(repoProjectParams);
-          const theData = theProjects.data;
+          const theProjectParams = context.repo({state:"open", name:rygProjectDefaultConfig.rygProjectProjectBoard})
+          const theProjects = await github.projects.getRepoProjects(theProjectParams);
+          const theProjectsData = theProjects.data;
 
-          robot.log('Moving Project Card to column \'' + rygProjectDefaultConfig.rygProjectLabelsColumns[key] + '\' in Project \'' + rygProjectDefaultConfig.rygProjectProjectBoard + '\'')
-          var projectID = -1;
-          if (theData.length == 1)
-          {
-            projectID = theData[0].id;
-            let allProjects = []
-            const projectColumnParams = {project_id : projectID};
+          if (theProjectsData.length == 1) { // we found the project
 
-            const theProjectColumns = await github.projects.getProjectColumns(projectColumnParams);
+            const theProjectID = theProjectsData[0].id;
+            const theProjectColumnParams = {project_id : theProjectID};
+
+            const theProjectColumns = await github.projects.getProjectColumns(theProjectColumnParams);
             const theProjectColumnsData = theProjectColumns.data;
+//            robot.log(theProjectColumnsData);
 
-            robot.log(theProjectColumnsData);
-/*
-            for (const projectColumn of theProjectColumns) {
-              robot.log('Project Column: \'' + projectColumn.name +'\'' )
+            const targetColumn = theProjectColumnsData.filter(column => column.name === targetColumnName);
+
+            if (targetColumn.length == 1) { // we found the column
+              columnID = targetColumn[0].id;
+
+              var allCards = [];
+              for (const column in theProjectColumnsData) {
+                var repoColumnCardsParams = context.repo({column_id:theProjectColumnsData[column].id});
+                var repoColumnCards = await github.projects.getProjectCards(repoColumnCardsParams);
+                const repoColumnCardsData = repoColumnCards.data
+                allCards = allCards.concat(repoColumnCardsData);
+              }
+
+// Filter out our card (where is the issue's id) and get the card ID
+             const targetCard = allCards.filter(card => card.content_url.endsWith('issues/'+payload.issue.number));
+             if( targetCard.length == 1){
+               var repoMoveCardsParams = context.repo({card_id: targetCard[0].id , column_id:2805807});
+//                 var repoMoveCardsParams = context.repo({card_id: targetCards[0].id, position: "top", column_id:columnID});
+               robot.log("targetCard");
+               robot.log(targetCard);
+               robot.log("repoMoveCardsParams");
+               robot.log(repoMoveCardsParams);
+               var myResult = await github.projects.moveProjectCard(repoMoveCardsParams);
+
+             } else if ( targetCard.length == 0 ) {
+               const repoColumnParams = context.repo({column_id:columnID, content_id:payload.issue.id, content_type:"Issue"});
+               await github.projects.createProjectCard(repoColumnParams)
+             }
+              robot.log('Finished moving Project Card to column \'' + rygProjectDefaultConfig.rygProjectLabelsColumns[key] + '\'')
             }
-*/
-            robot.log('Finished moving Project Card to column \'' + rygProjectDefaultConfig.rygProjectLabelsColumns[key] + '\'')
-          }
-          else
+
+          } else
           {
             robot.log('Project \'' + rygProjectDefaultConfig.rygProjectProjectBoard + '\' not found');
           }
