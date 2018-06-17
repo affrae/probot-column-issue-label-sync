@@ -115,7 +115,10 @@ module.exports = robot => {
                robot.log("Creating Issue Card in column: " + targetColumnName);
                const repoColumnParams = context.repo({column_id:columnID, content_id:payload.issue.id, content_type:"Issue"});
                await github.projects.createProjectCard(repoColumnParams)
-             }            }
+             }
+           } else {
+             robot.log("Project not found : " + targetProjectName)
+           }
 
           }
 
