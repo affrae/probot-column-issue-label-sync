@@ -86,7 +86,7 @@ module.exports = robot => {
             const targetColumn = theProjectColumnsData.filter(column => column.name === targetColumnName);
 
             if (targetColumn.length == 1) { // we found the column
-              columnID = targetColumn[0].id;
+              const columnID = targetColumn[0].id;
 
               var allCards = [];
               for (const column in theProjectColumnsData) {
