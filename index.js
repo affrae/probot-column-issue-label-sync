@@ -76,56 +76,97 @@ module.exports = robot => {
       * Note: This method will resolve on the first open project
       * with the required name
       */
+      var theProject = null
+      const theProjectParams = context.repo({state:"open"})
 
-      for (const key of arrayToClean) {
-        if(key === addedLabelName) {
-          var theProject = {}
-          const theProjectParams = context.repo({state:"open"})
+      await github.paginate(
+        github.projects.getRepoProjects(theProjectParams),
+        (res, done) => {
+          for (let project of res.data) {
+            robot.log("We found a project with name: " + project.name)
+            if (project.name === targetProjectName) {
+              theProject = project;
+              done();
+              break;
+            }
+          }
+        })
+        if (theProject !== null ) {
+          robot.log("We found the project with name: " + targetProjectName)
+          const theProjectID = theProject.id;
+          const theProjectColumnParams = {project_id : theProjectID};
+
+          var allColumns = [];
+          var targetColumn = null;
+          var targetCard = null;
           await github.paginate(
-            github.projects.getRepoProjects(theProjectParams),
+            github.projects.getProjectColumns(theProjectColumnParams),
             (res, done) => {
-              for (let project of res.data) {
-                robot.log("We found a project with name: " + project.name)
-                if (project.name === targetProjectName) {
-                  robot.log("We found the project with name: " + targetProjectName)
-                  theProject = project;
-                  done();
-                  break;
+              for (let column of res.data) {
+                robot.log("We found a column with name: " + column.name);
+                allColumns = allColumns.concat(column.id);
+                if (column.name === targetColumnName) {
+                  targetColumn = column;
                 }
               }
             })
+            robot.log(allColumns);
 
-          if (theProject != {} ) {
-            const theProjectID = theProject.id;
-            const theProjectColumnParams = {project_id : theProjectID};
-
-            var targetColumn = {};
-
-            await context.github.paginate(
-              github.projects.getProjectColumns(theProjectColumnParams),
-              (res, done) => {
-                for (let column of res.data) {
-                  robot.log("We found a column with name: " + column.name);
-                  if (column.name === targetColumnName) {
-                    robot.log("We found the column with name: " + targetColumnName);
-                    targetColumn = column;
-                    done();
-                    break;
+            for (let columnID of allColumns) {
+              robot.log("Getting cards for: " + columnID)
+              var repoColumnCardsParams = context.repo({column_id: columnID});
+              await context.github.paginate(
+                context.github.projects.getProjectCards(repoColumnCardsParams),
+                (res, done) => {
+                  for (let card of res.data) {
+                    robot.log("Checking a card with card.content_url: " + card.content_url)
+                    if (card.content_url.endsWith('issues/'+payload.issue.number)) {
+                      robot.log("Found THE card with card.content_url: " + card.content_url)
+                      targetCard = card;
+                      done()
+                    }
+                    if (targetCard !== null) {
+                      break
+                    }
                   }
+                })
+                if (targetCard !== null) {
+                  break
                 }
-              })
+              }
 
+            if (targetColumn !== null ) {
+              robot.log("We found the column with name: " + targetColumnName);
+
+
+              if ( targetCard !== null ) {
+                robot.log("Target card found")
+                var repoMoveCardsParams = context.repo({position: rygProjectDefaultConfig.rygProjectDefaultColumnPosition, id:targetCard.id , column_id:targetColumn.id});
+                var myResult = await github.projects.moveProjectCard(repoMoveCardsParams);
+              } else {
+                robot.log("Target card not found")
+                robot.log("Creating Issue Card in column: " + targetColumnName);
+                const repoColumnParams = context.repo({column_id:targetColumn.id, content_id:payload.issue.id, content_type:"Issue"});
+                await github.projects.createProjectCard(repoColumnParams)              }
             } else {
-           robot.log("Project not found : " + targetProjectName)
-         }
+              robot.log("Column not found : " + targetColumnName)
+            }
+          } else {
+         robot.log("Project not found : " + targetProjectName)
+       }
+
+      for (const key of arrayToClean) {
+        if(key === addedLabelName) {
+
+
+
        } else {
           robot.log("Removing label: " + key);
           const params = context.issue({name: key})
-          context.github.issues.removeLabel(params)
+          await github.issues.removeLabel(params)
         }
       }
     }
-    return
   })
 
   robot.on('issues.unlabeled', async context => {
