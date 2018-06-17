@@ -19,6 +19,14 @@ const rygProjectDefaultConfig = {
 
 var _ = require('underscore');
 
+/*
+* Sample functi0on declaration
+function myFunction(p1, p2) {
+    return p1 * p2;              // The function returns the product of p1 and p2
+}
+
+*/
+
 module.exports = robot => {
 
 /*
@@ -50,9 +58,7 @@ module.exports = robot => {
     const { payload, github } = context;
     const targetColumnlabelName = payload.label.name
 
-
-
-    if (targetColumnlabelName in rygProjectDefaultConfig.rygProjectLabelsColumns) {
+  if (targetColumnlabelName in rygProjectDefaultConfig.rygProjectLabelsColumns) {
       const targetColumnName = rygProjectDefaultConfig.rygProjectLabelsColumns[targetColumnlabelName];
       const rygProjectLabels = Object.keys(rygProjectDefaultConfig.rygProjectLabelsColumns)
       const issuesLabelsList = payload.issue.labels
@@ -76,7 +82,6 @@ module.exports = robot => {
 
             const theProjectColumns = await github.projects.getProjectColumns(theProjectColumnParams);
             const theProjectColumnsData = theProjectColumns.data;
-//            robot.log(theProjectColumnsData);
 
             const targetColumn = theProjectColumnsData.filter(column => column.name === targetColumnName);
 
@@ -94,26 +99,16 @@ module.exports = robot => {
 // Filter out our card (where is the issue's id) and get the card ID
              const targetCard = allCards.filter(card => card.content_url.endsWith('issues/'+payload.issue.number));
              if( targetCard.length == 1){
-               var repoMoveCardsParams = context.repo({card_id: targetCard[0].id , column_id:2805807});
-//                 var repoMoveCardsParams = context.repo({card_id: targetCards[0].id, position: "top", column_id:columnID});
-               robot.log("targetCard");
-               robot.log(targetCard);
-               robot.log("repoMoveCardsParams");
-               robot.log(repoMoveCardsParams);
+               var repoMoveCardsParams = context.repo({position: rygProjectDefaultConfig.rygProjectDefaultColumnPosition, id:targetCard[0].id , column_id:columnID});
+
                var myResult = await github.projects.moveProjectCard(repoMoveCardsParams);
 
              } else if ( targetCard.length == 0 ) {
                const repoColumnParams = context.repo({column_id:columnID, content_id:payload.issue.id, content_type:"Issue"});
                await github.projects.createProjectCard(repoColumnParams)
-             }
-              robot.log('Finished moving Project Card to column \'' + rygProjectDefaultConfig.rygProjectLabelsColumns[key] + '\'')
-            }
+             }            }
 
-          } else
-          {
-            robot.log('Project \'' + rygProjectDefaultConfig.rygProjectProjectBoard + '\' not found');
           }
-
 
 /*
 2. Find the new column via the [key,value] pair from rygProjectLabelsColumns
@@ -122,7 +117,6 @@ module.exports = robot => {
 */
         }
         else {
-          robot.log('Deleting \'' + key + '\' from the Modified Issue\'s Labels');
           const params = context.issue({name: key})
           context.github.issues.removeLabel(params)
         }
@@ -146,16 +140,10 @@ module.exports = robot => {
     const { payload, github } = context;
     const labelName = payload.label.name
     const rygProjectLabels = Object.keys(rygProjectDefaultConfig.rygProjectLabelsColumns)
-    robot.log('Newly removed label is: \'' + labelName + '\'');
     const issuesLabelsList =  payload.issue.labels
     const issuesLabels = issuesLabelsList.map(issuesLabelsList => issuesLabelsList["name"]);
-    robot.log('Modified Issue\'s Label Array is:');
-    robot.log(issuesLabels);
     const arrayToClean = _.intersection(issuesLabels, rygProjectLabels)
-    robot.log('Modified Issue\'s Project Label Array is:');
-    robot.log(arrayToClean);
     if (arrayToClean.length == 0) {
-      robot.log('Oops we removed all Project Labels, re-adding \'' + labelName + '\' label')
       await github.issues.addLabels(context.issue({ labels: [labelName] }));
 
     }
