@@ -48,6 +48,7 @@ module.exports = robot => {
 */
 
     if(_.intersection(newIssuesLabels, rygProjectLabels).length==0) {
+      robot.log("Adding Default Labels: " + rygProjectDefaultLabels)
       await github.issues.addLabels(context.issue({ labels:  rygProjectDefaultLabels  }));
     }
 
