@@ -80,6 +80,8 @@ module.exports = robot => {
           const theProjects = await github.projects.getRepoProjects(theProjectParams);
           const theProjectsData = theProjects.data;
 
+          robot.log("We found " + theProjectsData.length + " project(s) with name: " + targetProjectName)
+
           if (theProjectsData.length == 1) { // we found the project
             robot.log("Found Project: " + targetProjectName)
 
