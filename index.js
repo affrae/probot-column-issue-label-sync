@@ -40,6 +40,7 @@ module.exports = robot => {
     const newIssuesLabelsList =  payload.issue.labels;
     const newIssuesLabels= newIssuesLabelsList.map(newIssuesLabelsList => newIssuesLabelsList["name"]);
     const rygProjectDefaultLabels = rygProjectDefaultConfig.rygProjectDefaultLabels;
+    robot.log("WebHook received - Issue Opened: " + payload.issue.title)
 
 /*
 * _.intersection returns an array that represents the items that are in both
@@ -58,25 +59,29 @@ module.exports = robot => {
   robot.on('issues.labeled', async context => {
     const { payload, github } = context;
     const targetColumnlabelName = payload.label.name
+    robot.log("WebHook received - Issue labelled: " + targetColumnlabelName)
 
   if (targetColumnlabelName in rygProjectDefaultConfig.rygProjectLabelsColumns) {
+      const targetProjectName = rygProjectDefaultConfig.rygProjectProjectBoard;
       const targetColumnName = rygProjectDefaultConfig.rygProjectLabelsColumns[targetColumnlabelName];
       const rygProjectLabels = Object.keys(rygProjectDefaultConfig.rygProjectLabelsColumns)
       const issuesLabelsList = payload.issue.labels
       const issuesLabels = issuesLabelsList.map(issuesLabelsList => issuesLabelsList["name"]);
       const arrayToClean = _.intersection(issuesLabels, rygProjectLabels)
       const rygProjectColumnPosition = rygProjectDefaultConfig.rygProjectDefaultColumnPosition
+      robot.log("Target Column is: " + targetColumnName)
 
       for (const key of arrayToClean) {
-        if(key === targetColumnName) {
+        if(key === targetColumnlabelName) {
 /*
 * 1. Get the configured rygProjectProjectBoard project
 */
-          const theProjectParams = context.repo({state:"open", name:rygProjectDefaultConfig.rygProjectProjectBoard})
+          const theProjectParams = context.repo({state:"open", name:targetProjectName})
           const theProjects = await github.projects.getRepoProjects(theProjectParams);
           const theProjectsData = theProjects.data;
 
           if (theProjectsData.length == 1) { // we found the project
+            robot.log("Found Project: " + targetProjectName)
 
             const theProjectID = theProjectsData[0].id;
             const theProjectColumnParams = {project_id : theProjectID};
@@ -87,6 +92,7 @@ module.exports = robot => {
             const targetColumn = theProjectColumnsData.filter(column => column.name === targetColumnName);
 
             if (targetColumn.length == 1) { // we found the column
+              robot.log("Found Project Column: " + targetColumnName)
               const columnID = targetColumn[0].id;
 
               var allCards = [];
@@ -100,11 +106,13 @@ module.exports = robot => {
 // Filter out our card (where is the issue's id) and get the card ID
              const targetCard = allCards.filter(card => card.content_url.endsWith('issues/'+payload.issue.number));
              if( targetCard.length == 1){
+               robot.log("Found Issue Card - moving to column: " + targetColumnName);
                var repoMoveCardsParams = context.repo({position: rygProjectDefaultConfig.rygProjectDefaultColumnPosition, id:targetCard[0].id , column_id:columnID});
 
                var myResult = await github.projects.moveProjectCard(repoMoveCardsParams);
 
              } else if ( targetCard.length == 0 ) {
+               robot.log("Creating Issue Card in column: " + targetColumnName);
                const repoColumnParams = context.repo({column_id:columnID, content_id:payload.issue.id, content_type:"Issue"});
                await github.projects.createProjectCard(repoColumnParams)
              }            }
@@ -118,6 +126,7 @@ module.exports = robot => {
 */
         }
         else {
+          robot.log("Removing label: " + key);
           const params = context.issue({name: key})
           context.github.issues.removeLabel(params)
         }
@@ -140,11 +149,13 @@ module.exports = robot => {
   robot.on('issues.unlabeled', async context => {
     const { payload, github } = context;
     const labelName = payload.label.name
+    robot.log("WebHook received - Issue Label removed: " + labelName)
     const rygProjectLabels = Object.keys(rygProjectDefaultConfig.rygProjectLabelsColumns)
     const issuesLabelsList =  payload.issue.labels
     const issuesLabels = issuesLabelsList.map(issuesLabelsList => issuesLabelsList["name"]);
     const arrayToClean = _.intersection(issuesLabels, rygProjectLabels)
     if (arrayToClean.length == 0) {
+      robot.log("No required labels left, re-adding label: " + labelName)
       await github.issues.addLabels(context.issue({ labels: [labelName] }));
 
     }
