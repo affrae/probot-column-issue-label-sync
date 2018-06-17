@@ -105,10 +105,12 @@ module.exports = robot => {
               github.projects.getProjectColumns(theProjectColumnParams),
               (res, done) => {
                 for (let column of res.data) {
-                  robot.log("We found a column with name: " + column.name)
+                  robot.log("We found a column with name: " + column.name);
                   if (column.name === targetColumnName) {
-                    robot.log("We found the column with name: " + targetColumnName)
+                    robot.log("We found the column with name: " + targetColumnName);
                     targetColumn = column;
+                    done();
+                    break;
                   }
                 }
               })
