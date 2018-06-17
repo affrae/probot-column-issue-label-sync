@@ -58,79 +58,65 @@ module.exports = robot => {
 
   robot.on('issues.labeled', async context => {
     const { payload, github } = context;
-    const targetColumnlabelName = payload.label.name
-    robot.log("WebHook received - Issue labelled: " + targetColumnlabelName)
+    const addedLabelName = payload.label.name
+    robot.log("WebHook received - Issue labelled: " + addedLabelName)
 
-  if (targetColumnlabelName in rygProjectDefaultConfig.rygProjectLabelsColumns) {
+    if (addedLabelName in rygProjectDefaultConfig.rygProjectLabelsColumns) {
       const targetProjectName = rygProjectDefaultConfig.rygProjectProjectBoard;
-      const targetColumnName = rygProjectDefaultConfig.rygProjectLabelsColumns[targetColumnlabelName];
+      const targetColumnName = rygProjectDefaultConfig.rygProjectLabelsColumns[addedLabelName];
       const rygProjectLabels = Object.keys(rygProjectDefaultConfig.rygProjectLabelsColumns)
       const issuesLabelsList = payload.issue.labels
-      const issuesLabels = issuesLabelsList.map(issuesLabelsList => issuesLabelsList["name"]);
+      const issuesLabels = issuesLabelsList.map(issue => issue["name"]);
       const arrayToClean = _.intersection(issuesLabels, rygProjectLabels)
-      const rygProjectColumnPosition = rygProjectDefaultConfig.rygProjectDefaultColumnPosition
+      const projectColumnPosition = rygProjectDefaultConfig.rygProjectDefaultColumnPosition
       robot.log("Target Column is: " + targetColumnName)
 
+      /*
+      * Get the configured rygProjectProjectBoard project
+      * Note: This method will resolve on the first open project
+      * with the required name
+      */
+
       for (const key of arrayToClean) {
-        if(key === targetColumnlabelName) {
-/*
-* 1. Get the configured rygProjectProjectBoard project
-*/
-          const theProjectParams = context.repo({state:"open", name:targetProjectName})
-          const theProjects = await github.projects.getRepoProjects(theProjectParams);
-          const theProjectsData = theProjects.data;
+        if(key === addedLabelName) {
+          var theProject = {}
+          const theProjectParams = context.repo({state:"open"})
+          await github.paginate(
+            github.projects.getRepoProjects(theProjectParams),
+            (res, done) => {
+              for (let project of res.data) {
+                robot.log("We found a project with name: " + project.name)
+                if (project.name === targetProjectName) {
+                  robot.log("We found the project with name: " + targetProjectName)
+                  theProject = project;
+                  done();
+                  break;
+                }
+              }
+            })
 
-          robot.log("We found " + theProjectsData.length + " project(s) with name: " + targetProjectName)
-
-          if (theProjectsData.length == 1) { // we found the project
-            robot.log("Found Project: " + targetProjectName)
-
-            const theProjectID = theProjectsData[0].id;
+          if (theProject != {} ) {
+            const theProjectID = theProject.id;
             const theProjectColumnParams = {project_id : theProjectID};
 
-            const theProjectColumns = await github.projects.getProjectColumns(theProjectColumnParams);
-            const theProjectColumnsData = theProjectColumns.data;
+            var targetColumn = {};
 
-            const targetColumn = theProjectColumnsData.filter(column => column.name === targetColumnName);
+            await context.github.paginate(
+              github.projects.getProjectColumns(theProjectColumnParams),
+              (res, done) => {
+                for (let column of res.data) {
+                  robot.log("We found a column with name: " + column.name)
+                  if (column.name === targetColumnName) {
+                    robot.log("We found the column with name: " + targetColumnName)
+                    targetColumn = column;
+                  }
+                }
+              })
 
-            if (targetColumn.length == 1) { // we found the column
-              robot.log("Found Project Column: " + targetColumnName)
-              const columnID = targetColumn[0].id;
-
-              var allCards = [];
-              for (const column in theProjectColumnsData) {
-                var repoColumnCardsParams = context.repo({column_id:theProjectColumnsData[column].id});
-                var repoColumnCards = await github.projects.getProjectCards(repoColumnCardsParams);
-                const repoColumnCardsData = repoColumnCards.data
-                allCards = allCards.concat(repoColumnCardsData);
-              }
-
-// Filter out our card (where is the issue's id) and get the card ID
-             const targetCard = allCards.filter(card => card.content_url.endsWith('issues/'+payload.issue.number));
-             if( targetCard.length == 1){
-               robot.log("Found Issue Card - moving to column: " + targetColumnName);
-               var repoMoveCardsParams = context.repo({position: rygProjectDefaultConfig.rygProjectDefaultColumnPosition, id:targetCard[0].id , column_id:columnID});
-
-               var myResult = await github.projects.moveProjectCard(repoMoveCardsParams);
-
-             } else if ( targetCard.length == 0 ) {
-               robot.log("Creating Issue Card in column: " + targetColumnName);
-               const repoColumnParams = context.repo({column_id:columnID, content_id:payload.issue.id, content_type:"Issue"});
-               await github.projects.createProjectCard(repoColumnParams)
-             }
-           } else {
-             robot.log("Project not found : " + targetProjectName)
-           }
-
-          }
-
-/*
-2. Find the new column via the [key,value] pair from rygProjectLabelsColumns
-3. Find the issue's card in the project, if it does not exist, create it (singleton pattern)
-4. Move the card to the new column
-*/
-        }
-        else {
+            } else {
+           robot.log("Project not found : " + targetProjectName)
+         }
+       } else {
           robot.log("Removing label: " + key);
           const params = context.issue({name: key})
           context.github.issues.removeLabel(params)
@@ -139,17 +125,6 @@ module.exports = robot => {
     }
     return
   })
-/*
-  robot.on('issues.opened', async context => {
-    // `context` extracts information from the event, which can be passed to
-    // GitHub API calls. This will return:
-    //   {owner: 'yourname', repo: 'yourrepo', number: 123, body: 'Hello World!}
-    const params = context.issue({body: 'Hello World!'})
-
-    // Post a comment on the issue
-    return context.github.issues.createComment(params)
-  })
-  */
 
   robot.on('issues.unlabeled', async context => {
     const { payload, github } = context;
