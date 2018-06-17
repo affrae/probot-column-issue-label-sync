@@ -119,7 +119,7 @@ module.exports = robot => {
                 context.github.projects.getProjectCards(repoColumnCardsParams),
                 (res, done) => {
                   for (let card of res.data) {
-                    if (card.content_url) {
+                    if (typeof card.content_url != 'undefined') {
                       robot.log("Checking a card with card.content_url: " + card.content_url)
                       if (card.content_url.endsWith('issues/'+payload.issue.number)) {
                         robot.log("Found THE card with card.content_url: " + card.content_url)
