@@ -1,6 +1,6 @@
-# affrae-probot-testing
+# Probot Column Issue Label Sync
 
-> A GitHub App built with [probot](https://github.com/probot/probot) that I will use to test snippets and ideas. For the actual test impacts, see https://github.com/affrae/probot-testing
+A GitHub App built with [probot](https://github.com/probot/probot) that will update an issue's column in a defined project when a label from a defined list of label:column keypairs is added to the issue - and ensure that label is unique from that same defined list.
 
 ## Setup
 
