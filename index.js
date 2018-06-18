@@ -158,11 +158,7 @@ module.exports = robot => {
        }
 
       for (const key of arrayToClean) {
-        if(key === addedLabelName) {
-
-
-
-       } else {
+        if(key !== addedLabelName) {
           robot.log("Removing label: " + key);
           const params = context.issue({name: key})
           await github.issues.removeLabel(params)
@@ -186,15 +182,29 @@ module.exports = robot => {
     }
   })
 
-  /*
-  robot.on('issues.closed', async context => {
-      // `context` extracts information from the event, which can be passed to
-      // GitHub API calls. This will return:
-      //   {owner: 'yourname', repo: 'yourrepo', number: 123, body: 'Hello World!}
-      /// const params = context.issue({body: 'Goodbye!'})
+  robot.on('project_card.moved', async context => {
+    const { payload, github } = context;
+    project_card = payload.project_card
+    const column_id = project_card.column_id;
+    const content_url = project_card.content_url;
 
-      // Post a comment on the issue
-      ///return context.github.issues.createComment(params)
-    })
-    */
+    robot.log("WebHook received - Card moved to column with id: " + column_id + " and content_url: " + content_url)
+
+    if (typeof content_url == 'undefined') {
+      robot.log("Card is a note - no further action to be taken.")
+    } else {
+      issueNumber = content_url.split("/").slice(-1).pop();
+      robot.log("Card represents issue #" + issueNumber + " - relabelling...")
+      projectColumn = await github.projects.getProjectColumn(context.repo({column_id: column_id}));
+      projectColumnName = projectColumn.data.name;
+      robot.log("Project Column Name is: " + projectColumnName)
+
+      // Get the label name that matches the column Name
+
+      // Label the project
+    }
+
+
+  })
+
   }
