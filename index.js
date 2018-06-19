@@ -12,7 +12,7 @@ const rygProjectDefaultConfig = {
 
   Allowed values: top, bottom, after:
 */
-  rygProjectDefaultColumnPosition:"top"
+  rygProjectDefaultColumnPosition:"bottom"
 
 }
 
@@ -143,8 +143,13 @@ module.exports = robot => {
 
               if ( targetCard !== null ) {
                 robot.log("Target card found")
-                var repoMoveCardsParams = context.repo({position: rygProjectDefaultConfig.rygProjectDefaultColumnPosition, id:targetCard.id , column_id:targetColumn.id});
-                var myResult = await github.projects.moveProjectCard(repoMoveCardsParams);
+                if(targetCard.column_url != targetColumn.url) {
+                  robot.log("Target card not already in the column")
+                  var repoMoveCardsParams = context.repo({position: rygProjectDefaultConfig.rygProjectDefaultColumnPosition, id:targetCard.id , column_id:targetColumn.id});
+                  var myResult = await github.projects.moveProjectCard(repoMoveCardsParams);
+                } else {
+                  robot.log("Target card already in the column")
+                }
               } else {
                 robot.log("Target card not found")
                 robot.log("Creating Issue Card in column: " + targetColumnName);
@@ -200,7 +205,14 @@ module.exports = robot => {
       robot.log("Project Column Name is: " + projectColumnName)
 
       // Get the label name that matches the column Name
+      theNewLabel = (_.invert(rygProjectDefaultConfig.rygProjectLabelsColumns))[projectColumnName]
+      robot.log("Label for Column: " + projectColumnName + " is " + theNewLabel)
+      if(typeof theNewLabel != 'undefined') {
+        await github.issues.addLabels(context.issue({ number: issueNumber, labels: [theNewLabel] }));
 
+      } else {
+        robot.log("Column is not in watched list")
+      }
       // Label the project
     }
 
