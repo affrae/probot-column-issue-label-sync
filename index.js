@@ -119,7 +119,7 @@ module.exports = robot => {
                 context.github.projects.getProjectCards(repoColumnCardsParams),
                 (res, done) => {
                   for (let card of res.data) {
-                    if (typeof card.content_url != 'undefined') {
+                    if (typeof card.content_url != void 0) {
                       robot.log("Checking a card with card.content_url: " + card.content_url)
                       if (card.content_url.endsWith('issues/'+payload.issue.number)) {
                         robot.log("Found THE card with card.content_url: " + card.content_url)
@@ -189,25 +189,25 @@ module.exports = robot => {
 
   robot.on('project_card.moved', async context => {
     const { payload, github } = context;
-    project_card = payload.project_card
+    const project_card = payload.project_card
     const column_id = project_card.column_id;
     const content_url = project_card.content_url;
 
     robot.log("WebHook received - Card moved to column with id: " + column_id + " and content_url: " + content_url)
 
-    if (typeof content_url == 'undefined') {
+    if (typeof content_url == void 0) {
       robot.log("Card is a note - no further action to be taken.")
     } else {
-      issueNumber = content_url.split("/").slice(-1).pop();
+      const issueNumber = content_url.split("/").slice(-1).pop();
       robot.log("Card represents issue #" + issueNumber + " - relabelling...")
-      projectColumn = await github.projects.getProjectColumn(context.repo({column_id: column_id}));
-      projectColumnName = projectColumn.data.name;
+      const projectColumn = await github.projects.getProjectColumn(context.repo({column_id: column_id}));
+      const projectColumnName = projectColumn.data.name;
       robot.log("Project Column Name is: " + projectColumnName)
 
       // Get the label name that matches the column Name
-      theNewLabel = (_.invert(rygProjectDefaultConfig.rygProjectLabelsColumns))[projectColumnName]
+      const theNewLabel = (_.invert(rygProjectDefaultConfig.rygProjectLabelsColumns))[projectColumnName]
       robot.log("Label for Column: " + projectColumnName + " is " + theNewLabel)
-      if(typeof theNewLabel != 'undefined') {
+      if(typeof theNewLabel != void 0) {
         await github.issues.addLabels(context.issue({ number: issueNumber, labels: [theNewLabel] }));
 
       } else {
