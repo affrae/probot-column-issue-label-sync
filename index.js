@@ -27,6 +27,9 @@ function myFunction(p1, p2) {
 *
 */
 
+const config = await context.config('probotcolumnissuelabelsync.yml', rygProjectDefaultConfig)
+
+
 module.exports = robot => {
 
 /*
