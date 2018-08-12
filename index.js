@@ -215,7 +215,6 @@ module.exports = robot => {
       const theNewLabel = (_.invert(config.labelsColumns))[projectColumnName]
       robot.log("Label for Column: " + projectColumnName + " is " + theNewLabel)
       if(typeof theNewLabel != 'undefined') {
-// need to add logic to make sure the issue does nt already have that label - currebtly generating extra traffic.
 
        const currentLabels = await github.issues.getIssueLabels
        (context.issue({ number: issueNumber}));
