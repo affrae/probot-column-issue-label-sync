@@ -15,3 +15,37 @@ npm install
 # Run the bot
 npm start
 ```
+
+## Configuration from file
+
+In your repository, create a file .github/probotcolumnissuelabelsync.yml
+
+```yml
+
+# What is the name of the project board you wish to use?
+
+projectBoard: 🛑⚠️❇️ Alerts
+
+# What are the labels and corresponding columns you wish to track?
+# Format:
+# labelName: columnName
+
+labelsColumns: 
+   🛑 Red: 🛑 Red
+   ⚠️ Yellow: ⚠️ Yellow
+   ❇️ Green: ❇️ Green
+
+# What are the default labels you wish to add to a new issue?
+
+defaultLabels:
+   - ❇️ Green
+
+# Where do you want the card to move to in the new column?
+# Can be one of top, bottom, or after:<card_id>, 
+# where <card_id> is the id value of a card in the same column
+# Allowed values: top, bottom, after:
+
+defaultColumnPosition: bottom
+
+```
+
