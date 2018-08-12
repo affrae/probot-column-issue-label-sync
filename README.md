@@ -26,7 +26,7 @@ In your repository, create a file .github/probotcolumnissuelabelsync.yml
 
 projectBoard: Alerts Project From Config File
 
-# What are the labels and corrresponding columns you wish to track?
+# What are the labels and corresponding columns you wish to track?
 # Format:
 # labelName: columnName
 
