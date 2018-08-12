@@ -1,18 +1,18 @@
-const rygProjectDefaultConfig = {
-  rygProjectProjectBoard:"🛑⚠️❇️ Alerts",
-  rygProjectLabelsColumns: {
+const defaultConfig = {
+  projectBoard:"🛑⚠️❇️ Alerts",
+  labelsColumns: {
     "🛑 Red":"🛑 Red",
     "⚠️ Yellow":"⚠️ Yellow",
     "❇️ Green":"❇️ Green"
   },
-  rygProjectDefaultLabels:["❇️ Green"],
+  defaultLabels:["❇️ Green"],
 
   /*
   Can be one of top, bottom, or after:<card_id>, where <card_id> is the id value of a card in the same column, or in the new column specified by column_id.
 
   Allowed values: top, bottom, after:
 */
-  rygProjectDefaultColumnPosition:"bottom"
+  defaultColumnPosition:"bottom"
 }
 
 
@@ -40,12 +40,12 @@ module.exports = robot => {
 
 
   robot.on('issues.opened', async context => {
-    const config = await context.config('probotcolumnissuelabelsync.yml', rygProjectDefaultConfig)
+    const config = await context.config('probotcolumnissuelabelsync.yml', defaultConfig)
     const { payload, github } = context;
-    const rygProjectLabels = Object.keys(config.rygProjectLabelsColumns);
+    const rygProjectLabels = Object.keys(config.labelsColumns);
     const newIssuesLabelsList =  payload.issue.labels;
     const newIssuesLabels= newIssuesLabelsList.map(newIssuesLabelsList => newIssuesLabelsList["name"]);
-    const rygProjectDefaultLabels = config.rygProjectDefaultLabels;
+    const defaultLabels = config.defaultLabels;
     robot.log("WebHook received - Issue Opened: " + payload.issue.title)
 
 /*
@@ -55,32 +55,32 @@ module.exports = robot => {
 */
 
     if(_.intersection(newIssuesLabels, rygProjectLabels).length==0) {
-      robot.log("Adding Default Labels: " + rygProjectDefaultLabels)
-      await github.issues.addLabels(context.issue({ labels:  rygProjectDefaultLabels  }));
+      robot.log("Adding Default Labels: " + defaultLabels)
+      await github.issues.addLabels(context.issue({ labels:  defaultLabels  }));
     }
 
     return
   })
 
   robot.on('issues.labeled', async context => {
-    const config = await context.config('probotcolumnissuelabelsync.yml', rygProjectDefaultConfig)
+    const config = await context.config('probotcolumnissuelabelsync.yml', defaultConfig)
 
     const { payload, github } = context;
     const addedLabelName = payload.label.name
     robot.log("WebHook received - Issue labelled: " + addedLabelName)
 
-    if (addedLabelName in config.rygProjectLabelsColumns) {
-      const targetProjectName = config.rygProjectProjectBoard;
-      const targetColumnName = config.rygProjectLabelsColumns[addedLabelName];
-      const rygProjectLabels = Object.keys(config.rygProjectLabelsColumns)
+    if (addedLabelName in config.labelsColumns) {
+      const targetProjectName = config.projectBoard;
+      const targetColumnName = config.labelsColumns[addedLabelName];
+      const rygProjectLabels = Object.keys(config.labelsColumns)
       const issuesLabelsList = payload.issue.labels
       const issuesLabels = issuesLabelsList.map(issue => issue["name"]);
       const arrayToClean = _.intersection(issuesLabels, rygProjectLabels)
-      const projectColumnPosition = config.rygProjectDefaultColumnPosition
+      const projectColumnPosition = config.defaultColumnPosition
       robot.log("Target Column is: " + targetColumnName)
 
       /*
-      * Get the configured rygProjectProjectBoard project
+      * Get the configured projectBoard project
       * Note: This method will resolve on the first open project
       * with the required name
       */
@@ -148,7 +148,7 @@ module.exports = robot => {
                 robot.log("Target card found")
                 if(targetCard.column_url != targetColumn.url) {
                   robot.log("Target card not already in the column")
-                  var repoMoveCardsParams = context.repo({position: config.rygProjectDefaultColumnPosition, id:targetCard.id , column_id:targetColumn.id});
+                  var repoMoveCardsParams = context.repo({position: config.defaultColumnPosition, id:targetCard.id , column_id:targetColumn.id});
                   var myResult = await github.projects.moveProjectCard(repoMoveCardsParams);
                 } else {
                   robot.log("Target card already in the column")
@@ -176,12 +176,12 @@ module.exports = robot => {
   })
 
   robot.on('issues.unlabeled', async context => {
-    const config = await context.config('probotcolumnissuelabelsync.yml', rygProjectDefaultConfig)
+    const config = await context.config('probotcolumnissuelabelsync.yml', defaultConfig)
     const { payload, github } = context;
     const labelName = payload.label.name
     robot.log("WebHook received - Issue Label removed: " + labelName)
 
-    const rygProjectLabels = Object.keys(config.rygProjectLabelsColumns)
+    const rygProjectLabels = Object.keys(config.labelsColumns)
     const issuesLabelsList =  payload.issue.labels
     const issuesLabels = issuesLabelsList.map(issuesLabelsList => issuesLabelsList["name"]);
     const arrayToClean = _.intersection(issuesLabels, rygProjectLabels)
@@ -193,7 +193,7 @@ module.exports = robot => {
   })
 
   robot.on('project_card.moved', async context => {
-    const config = await context.config('probotcolumnissuelabelsync.yml', rygProjectDefaultConfig)
+    const config = await context.config('probotcolumnissuelabelsync.yml', defaultConfig)
 
     const { payload, github } = context;
     const project_card = payload.project_card
@@ -212,7 +212,7 @@ module.exports = robot => {
       robot.log("Project Column Name is: " + projectColumnName)
 
       // Get the label name that matches the column Name
-      const theNewLabel = (_.invert(config.rygProjectLabelsColumns))[projectColumnName]
+      const theNewLabel = (_.invert(config.labelsColumns))[projectColumnName]
       robot.log("Label for Column: " + projectColumnName + " is " + theNewLabel)
       if(typeof theNewLabel != 'undefined') {
 // need to add logic to make sure the issue does nt already have that label - currebtly generating extra traffic.
