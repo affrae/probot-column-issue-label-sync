@@ -24,21 +24,21 @@ In your repository, create a file .github/probotcolumnissuelabelsync.yml
 
 # What is the name of the project board you wish to use?
 
-projectBoard: Alerts Project From Config File
+projectBoard: 🛑⚠️❇️ Alerts
 
 # What are the labels and corresponding columns you wish to track?
 # Format:
 # labelName: columnName
 
 labelsColumns: 
-   🛑 Red: Red
-   Yellow: ⚠️ Yellow
-   Green: Green
+   🛑 Red: 🛑 Red
+   ⚠️ Yellow: ⚠️ Yellow
+   ❇️ Green: ❇️ Green
 
 # What are the default labels you wish to add to a new issue?
 
 defaultLabels:
-   - Green
+   - ❇️ Green
 
 # Where do you want the card to move to in the new column?
 # Can be one of top, bottom, or after:<card_id>, 
